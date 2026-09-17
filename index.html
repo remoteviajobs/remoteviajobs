@@ -1,48 +1,95 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Remote Via Jobs - Find Remote Jobs Worldwide</title>
-<script src="https://cdn.tailwindcss.com"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RemoteViaJobs - Find Remote Jobs Worldwide</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; }
+        h1 { text-align: center; color: #333; }
+        .search-box { text-align: center; margin-bottom: 20px; }
+        input { padding: 10px; width: 80%; max-width: 500px; border-radius: 5px; border: 1px solid #ccc; }
+        .jobs-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; max-width: 1200px; margin: 0 auto; }
+        .job-card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .job-title { font-size: 18px; font-weight: bold; margin: 0 0 10px 0; }
+        .job-company { color: #555; margin-bottom: 5px; }
+        .job-location { color: #777; font-size: 14px; margin-bottom: 10px; }
+        .job-salary { color: #2ecc71; font-weight: bold; margin-bottom: 15px; }
+        .apply-btn { display: inline-block; background: #007bff; color: white; padding: 10px 15px; text-decoration: none; border-radius: 5px; text-align: center; }
+        .apply-btn:hover { background: #0056b3; }
+        .loading { text-align: center; font-size: 20px; color: #555; }
+    </style>
 </head>
-<body class="bg-white text-black">
-<nav class="flex justify-between items-center px-6 py-4 border-b sticky top-0 bg-white">
-  <div class="font-black text-xl">🌍 REMOTE VIA JOBS</div>
-  <div class="bg-black text-white px-4 py-2 rounded-full text-xs">WORLDWIDE</div>
-</nav>
-<section class="text-center py-20 px-6">
-  <h1 class="text-6xl font-black">Find Remote Jobs<br><span class="text-blue-600">Worldwide</span></h1>
-  <p class="mt-4 text-gray-600">Work from anywhere. 1000+ remote jobs updated daily.</p>
-  <div class="mt-8 flex justify-center gap-2">
-    <input id="search" placeholder="Search worldwide jobs..." class="border px-6 py-3 rounded-full w-80 outline-none">
-    <button onclick="loadJobs()" class="bg-black text-white px-8 py-3 rounded-full font-bold">Search</button>
-  </div>
-</section>
-<section class="bg-gray-50 py-12 px-6">
-  <div class="max-w-6xl mx-auto">
-    <h2 class="text-2xl font-black mb-6">🌍 Worldwide Remote Jobs - Live</h2>
-    <div id="jobs" class="grid md:grid-cols-3 gap-4">
-      <div class="bg-white p-4 border rounded-xl">Loading worldwide jobs...</div>
+<body>
+
+    <h1>RemoteViaJobs</h1>
+    <div class="search-box">
+        <input type="text" id="searchInput" placeholder="Search for job title or company..." onkeyup="filterJobs()">
     </div>
-  </div>
-</section>
-<script>
-async function loadJobs(){
-  try{
-    let res = await fetch('https://www.arbeitnow.com/api/job-board-api');
-    let data = await res.json();
-    let html='';
-    data.data.slice(0,12).forEach(job=>{
-      html+=`<div class="bg-white p-6 border rounded-2xl"><span class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">WORLDWIDE</span><h3 class="font-bold mt-3">${job.title}</h3><p class="text-sm text-gray-600">${job.company_name} - ${job.location}</p><a href="${job.url}" target="_blank" class="mt-3 inline-block bg-black text-white px-4 py-2 rounded-full text-sm">Apply Now</a></div>`;
-    });
-    document.getElementById('jobs').innerHTML=html;
-  }catch(e){
-    document.getElementById('jobs').innerHTML='Jobs loading... refresh';
-  }
-}
-loadJobs();
-</script>
-<footer class="text-center py-10 text-sm text-gray-500">© 2026 Remote Via Jobs - Worldwide Remote Jobs Platform</footer>
+    
+    <div id="loading" class="loading">Loading jobs...</div>
+    <div class="jobs-container" id="jobsContainer"></div>
+
+    <script>
+        // REPLACE THE TWO LINES BELOW WITH YOUR SUPABASE INFO
+        const SUPABASE_URL = 'https://xsuqoebwpuxnhjpjzysv.supabase.co' ;
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhzdXFvZWJ3cHV4bmhqcGp6eXN2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk1OTg4NjQsImV4cCI6MjEwNTE3NDg2NH0.fVRP2mQU_yExjbTvUJzbsHCTQnIa2JBUJcidozSIxCQ' ;
+
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        let allJobs = [];
+
+        async function fetchJobs() {
+            const { data, error } = await supabaseClient
+                .from('jobs')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (error) {
+                console.error('Error fetching jobs:', error);
+                document.getElementById('loading').innerText = 'Error loading jobs.';
+                return;
+            }
+
+            allJobs = data;
+            document.getElementById('loading').style.display = 'none';
+            renderJobs(allJobs);
+        }
+
+        function renderJobs(jobs) {
+            const container = document.getElementById('jobsContainer');
+            container.innerHTML = '';
+
+            if (jobs.length === 0) {
+                container.innerHTML = '<p style="text-align:center;">No jobs found.</p>';
+                return;
+            }
+
+            jobs.forEach(job => {
+                const card = document.createElement('div');
+                card.className = 'job-card';
+                card.innerHTML = `
+                    <h2 class="job-title">${job.title || 'Untitled Job'}</h2>
+                    <p class="job-company">${job.company || 'Unknown Company'}</p>
+                    <p class="job-location">📍 ${job.location || 'Remote'}</p>
+                    <p class="job-salary">${job.salary || 'Salary not specified'}</p>
+                    <a href="${job.apply_url}" target="_blank" class="apply-btn">Apply Now</a>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function filterJobs() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = allJobs.filter(job => 
+                (job.title && job.title.toLowerCase().includes(query)) || 
+                (job.company && job.company.toLowerCase().includes(query))
+            );
+            renderJobs(filtered);
+        }
+
+        // Run the fetch when the page loads
+        fetchJobs();
+    </script>
 </body>
 </html>
