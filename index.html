@@ -3,36 +3,78 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RemoteViaJobs - Find Remote Jobs Worldwide</title>
+    <title>Remote Via Jobs - Find Remote Jobs Worldwide</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: Arial, sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; }
-        h1 { text-align: center; color: #333; }
-        .search-box { text-align: center; margin-bottom: 20px; }
-        input { padding: 10px; width: 80%; max-width: 500px; border-radius: 5px; border: 1px solid #ccc; }
-        .jobs-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; max-width: 1200px; margin: 0 auto; }
-        .job-card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; flex-direction: column; justify-content: space-between; }
-        .job-title { font-size: 18px; font-weight: bold; margin: 0 0 10px 0; }
-        .job-company { color: #555; margin-bottom: 5px; }
-        .job-location { color: #777; font-size: 14px; margin-bottom: 10px; }
-        .job-salary { color: #2ecc71; font-weight: bold; margin-bottom: 15px; }
-        .apply-btn { display: inline-block; background: #007bff; color: white; padding: 10px 15px; text-decoration: none; border-radius: 5px; text-align: center; margin-top: auto; }
-        .apply-btn:hover { background: #0056b3; }
-        .loading { text-align: center; font-size: 20px; color: #555; }
+        :root {
+            --primary-color: #0B3763;
+            --accent-color: #00A8FF;
+            --bg-color: #f8fafc;
+            --text-dark: #1e293b;
+            --text-light: #64748b;
+            --white: #ffffff;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-color); color: var(--text-dark); line-height: 1.6; }
+        .hero { background: linear-gradient(135deg, var(--primary-color) 0%, #1e4b7a 100%); color: var(--white); padding: 60px 20px 80px 20px; text-align: center; border-bottom-left-radius: 30px; border-bottom-right-radius: 30px; margin-bottom: 40px; }
+        .hero h1 { font-size: 2.5rem; font-weight: 700; margin-bottom: 10px; letter-spacing: 1px; }
+        .hero p { font-size: 1.1rem; opacity: 0.9; margin-bottom: 30px; }
+        .search-box { max-width: 600px; margin: 0 auto; position: relative; }
+        .search-box input { width: 100%; padding: 18px 25px; border-radius: 50px; border: none; font-size: 1rem; font-family: 'Inter', sans-serif; box-shadow: 0 10px 25px rgba(0,0,0,0.1); outline: none; transition: box-shadow 0.3s ease; }
+        .search-box input:focus { box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        .jobs-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 25px; max-width: 1200px; margin: 0 auto; padding: 0 20px 60px 20px; }
+        .job-card { background: var(--white); padding: 25px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); border: 1px solid #e2e8f0; display: flex; flex-direction: column; justify-content: space-between; transition: transform 0.2s ease, box-shadow 0.2s ease; }
+        .job-card:hover { transform: translateY(-5px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
+        .job-title { font-size: 1.15rem; font-weight: 700; color: var(--text-dark); margin-bottom: 8px; line-height: 1.3; }
+        .job-company { font-size: 0.95rem; font-weight: 500; color: var(--primary-color); margin-bottom: 12px; }
+        .job-meta { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+        .job-tag { background: #f1f5f9; color: var(--text-light); font-size: 0.8rem; padding: 4px 10px; border-radius: 20px; font-weight: 500; display: inline-flex; align-items: center; gap: 5px; }
+        .job-salary { color: #10b981; font-weight: 600; font-size: 0.9rem; }
+        .apply-btn { display: block; background: var(--primary-color); color: var(--white); padding: 12px 20px; text-decoration: none; border-radius: 10px; text-align: center; font-weight: 600; font-size: 0.95rem; transition: background 0.3s ease, transform 0.1s ease; margin-top: auto; }
+        .apply-btn:hover { background: var(--accent-color); }
+        .apply-btn:active { transform: scale(0.98); }
+        .loading { text-align: center; font-size: 1.2rem; color: var(--text-light); padding: 40px; grid-column: 1 / -1; }
+        footer { background: #0f172a; color: #94a3b8; padding: 50px 20px 30px 20px; text-align: center; border-top: 1px solid #1e293b; }
+        .footer-logo { font-size: 1.5rem; font-weight: 700; color: var(--white); margin-bottom: 15px; letter-spacing: 2px; }
+        .footer-tagline { font-size: 0.95rem; margin-bottom: 25px; color: #cbd5e1; }
+        .footer-links { display: flex; justify-content: center; gap: 20px; margin-bottom: 30px; flex-wrap: wrap; }
+        .footer-links a { color: #94a3b8; text-decoration: none; font-size: 0.9rem; transition: color 0.3s ease; }
+        .footer-links a:hover { color: var(--white); }
+        .footer-founder { font-size: 0.9rem; color: #94a3b8; border-top: 1px solid #1e293b; padding-top: 20px; max-width: 400px; margin: 0 auto; }
+        .footer-founder strong { color: var(--white); font-weight: 600; }
+        @media (max-width: 600px) { .hero h1 { font-size: 1.8rem; } .hero p { font-size: 1rem; } .jobs-container { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
+    <header class="hero">
+        <h1 style="font-size: 2rem; margin-bottom: 15px;">Remote Via Jobs</h1>
+        <p>Find Remote Jobs Worldwide</p>
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="Search for job title, company, or skill..." onkeyup="filterJobs()">
+        </div>
+    </header>
 
-    <h1>RemoteViaJobs</h1>
-    <div class="search-box">
-        <input type="text" id="searchInput" placeholder="Search for job title or company..." onkeyup="filterJobs()">
-    </div>
-    
     <div id="loading" class="loading">Loading jobs...</div>
     <div class="jobs-container" id="jobsContainer"></div>
 
+    <footer>
+        <div class="footer-logo">R V J</div>
+        <p class="footer-tagline">Find Remote Jobs Worldwide</p>
+        <div class="footer-links">
+            <a href="#">About</a>
+            <a href="#">Privacy Policy</a>
+            <a href="#">Terms of Service</a>
+            <a href="#">Contact Us</a>
+        </div>
+        <div class="footer-founder">
+            <p><strong>Magnus Crown</strong> | Founder & CEO</p>
+            <p style="margin-top: 5px;">© 2026 Remote Via Jobs. All rights reserved.</p>
+        </div>
+    </footer>
+
     <script>
-        // REPLACE THE TWO LINES BELOW WITH YOUR SUPABASE INFO
+        // 🚨 PASTE YOUR SUPABASE ANON KEY BELOW 🚨
         const SUPABASE_URL = 'https://xsuqoebwpuxnhjpjzysv.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhzdXFvZWJ3cHV4bmhqcGp6eXN2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk1OTg4NjQsImV4cCI6MjEwNTE3NDg2NH0.fVRP2mQU_yExjbTvUJzbsHCTQnIa2JBUJcidozSIxCQ';
 
@@ -40,39 +82,27 @@
         let allJobs = [];
 
         async function fetchJobs() {
-            const { data, error } = await supabaseClient
-                .from('jobs')
-                .select('*')
-                .order('created_at', { ascending: false });
-
-            if (error) {
-                console.error('Error fetching jobs:', error);
-                document.getElementById('loading').innerText = 'Error loading jobs.';
-                return;
-            }
-
-            allJobs = data;
-            document.getElementById('loading').style.display = 'none';
-            renderJobs(allJobs);
+            const { data, error } = await supabaseClient.from('jobs').select('*').order('created_at', { ascending: false });
+            if (error) { console.error('Error fetching jobs:', error); document.getElementById('loading').innerText = 'Error loading jobs.'; return; }
+            allJobs = data; document.getElementById('loading').style.display = 'none'; renderJobs(allJobs);
         }
 
         function renderJobs(jobs) {
-            const container = document.getElementById('jobsContainer');
-            container.innerHTML = '';
-
-            if (jobs.length === 0) {
-                container.innerHTML = '<p style="text-align:center;">No jobs found.</p>';
-                return;
-            }
-
+            const container = document.getElementById('jobsContainer'); container.innerHTML = '';
+            if (jobs.length === 0) { container.innerHTML = '<p style="text-align:center; grid-column: 1/-1;">No jobs found.</p>'; return; }
             jobs.forEach(job => {
-                const card = document.createElement('div');
-                card.className = 'job-card';
+                const card = document.createElement('div'); card.className = 'job-card';
+                const location = job.location || 'Remote';
+                const salary = job.salary && job.salary !== 'Not specified' ? job.salary : null;
                 card.innerHTML = `
-                    <h2 class="job-title">${job.title || 'Untitled Job'}</h2>
-                    <p class="job-company">${job.company || 'Unknown Company'}</p>
-                    <p class="job-location">📍 ${job.location || 'Remote'}</p>
-                    <p class="job-salary">${job.salary || 'Salary not specified'}</p>
+                    <div>
+                        <h2 class="job-title">${job.title || 'Untitled Job'}</h2>
+                        <p class="job-company">${job.company || 'Unknown Company'}</p>
+                        <div class="job-meta">
+                            <span class="job-tag">📍 ${location}</span>
+                            ${salary ? `<span class="job-tag job-salary">💰 ${salary}</span>` : ''}
+                        </div>
+                    </div>
                     <a href="${job.apply_url}" target="_blank" class="apply-btn">View & Apply</a>
                 `;
                 container.appendChild(card);
@@ -81,14 +111,9 @@
 
         function filterJobs() {
             const query = document.getElementById('searchInput').value.toLowerCase();
-            const filtered = allJobs.filter(job => 
-                (job.title && job.title.toLowerCase().includes(query)) || 
-                (job.company && job.company.toLowerCase().includes(query))
-            );
+            const filtered = allJobs.filter(job => (job.title && job.title.toLowerCase().includes(query)) || (job.company && job.company.toLowerCase().includes(query)) || (job.location && job.location.toLowerCase().includes(query)));
             renderJobs(filtered);
         }
-
-        // Run the fetch when the page loads
         fetchJobs();
     </script>
 </body>
