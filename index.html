@@ -68,12 +68,21 @@
             jobs.forEach(job => {
                 const card = document.createElement('div');
                 card.className = 'job-card';
-                card.innerHTML = `
+                                card.innerHTML = `
                     <h2 class="job-title">${job.title || 'Untitled Job'}</h2>
                     <p class="job-company">${job.company || 'Unknown Company'}</p>
                     <p class="job-location">📍 ${job.location || 'Remote'}</p>
                     <p class="job-salary">${job.salary || 'Salary not specified'}</p>
+                    
+                    <details style="margin-bottom: 15px;">
+                        <summary style="cursor: pointer; color: #007bff; font-weight: bold;">View Job Description</summary>
+                        <div style="margin-top: 10px; font-size: 14px; color: #444; max-height: 200px; overflow-y: auto; background: #f9f9f9; padding: 10px; border-radius: 5px;">
+                            ${job.description || 'No description provided.'}
+                        </div>
+                    </details>
+
                     <a href="${job.apply_url}" target="_blank" class="apply-btn">Apply Now</a>
+                `;
                 `;
                 container.appendChild(card);
             });
